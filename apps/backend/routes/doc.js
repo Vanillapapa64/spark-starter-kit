@@ -11,7 +11,7 @@ async function newdoctor(inputs) {
     try{
         const exists=await prisma.doc.findFirst({
             where:{
-                email:inputs.email
+                email:inputs.username
             }
         })
         if(exists){
@@ -19,7 +19,7 @@ async function newdoctor(inputs) {
         }
         await prisma.doc.create({
             data:{
-                email:inputs.email,
+                email:inputs.username,
                 password:inputs.password,
                 name:inputs.name,
                 qualification:inputs.qualification
@@ -32,12 +32,12 @@ async function newdoctor(inputs) {
         await prisma.$disconnect();
     }
 }
-async function gettexts(email) {
+async function gettexts(id) {
     await prisma.$connect();
     try{
         const doctor=await prisma.doc.findUnique({
             where:{
-                email:email
+                id:id
             }
         })
         const texts=await prisma.mentaltext.findMany({
@@ -58,7 +58,7 @@ async function gettexts(email) {
     }
 }
 
-router.post('/newdoc',async(req,res)=>{
+router.post('/signup',async(req,res)=>{
     const inputs=req.body;
     const response= await newdoctor(inputs)
     res.status(response.status).json(response.message)
@@ -74,7 +74,7 @@ router.post('/signin',authmiddleware,async(req,res)=>{
         }
     })
     if(response){
-        const userId=response.email;
+        const userId=response.id;
         const token=jwt.sign(userId,secret)
         res.setHeader('Authorization', `Bearer ${token}`);
         res.status(200).json({response,token})
@@ -84,11 +84,12 @@ router.post('/signin',authmiddleware,async(req,res)=>{
     }
 })
 router.get('/fetchtexts',authmiddleware,async(req,res)=>{
-    const email=req.userEmail;
-    if (!email) {
-        return res.status(400).json({ message: 'token is required' });
-    }
-    const answer=await gettexts(email)
+    const id=parseInt(req.id);
+    console.log(id)
+    // if (!id) {
+    //     return res.status(400).json({ message: 'token is required' });
+    // }
+    const answer=await gettexts(id)
     res.status(answer.status).json(answer.message)
 })
 module.exports=router;

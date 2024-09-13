@@ -1,13 +1,19 @@
-import ImageUploaderblood from "./components/Blood";
-import { BrowserRouter,Route,Routes } from "react-router-dom";
-import ImageUploaderliver from "./components/Liver";
-import Cancerupload from "./components/Cancer";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import styles from './app.module.scss';
 
-function App(){
-  return(
-    <div>
-      <Cancerupload />
+import NxWelcome from './nx-welcome';
+
+import { Route, Routes, Link } from 'react-router-dom';
+import { RecoilRoot } from 'recoil'
+import Landingpage from '../pages/Landing';
+import Navbar from '../components/Navbar';
+export function App() {
+  return (
+    <div className='bg-zinc-100 w-screen h-screen'>
+      <Navbar text='Your Personal Health Assistant'/>
+      <Landingpage />
     </div>
-  )
+  );
 }
+
 export default App;

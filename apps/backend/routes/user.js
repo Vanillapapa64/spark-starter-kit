@@ -3,7 +3,9 @@ const app=express();
 const router=express.Router();
 const multer=require('multer')
 const OpenAI = require('openai');
-
+const client=new OpenAI({
+    apiKey:"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"
+})
 const secret=require('../secret')
 
 const jwt=require('jsonwebtoken')
@@ -66,7 +68,7 @@ async function newmentaltext(input,email) {
         return {status:200,message:"text sent to doc"}
     }catch(err){
         console.log(err)
-        return {status:500, message:'server error'}
+        return {status:500, message:'khraab'}
     }finally{
         await prisma.$disconnect();
     }
@@ -87,7 +89,7 @@ router.post('/signin',async (req,res)=>{
         }
     })
     if(response){
-        const userId=response.email;
+        const userId=response.id;
         const token=jwt.sign(userId,secret)
         res.setHeader('Authorization', `Bearer ${token}`);
         res.status(200).json({response,token})
@@ -180,15 +182,13 @@ router.post('/uploadblood',authmiddleware,upload.array('image',3),async(req,res)
 })
 router.get('/fetchbloodreports',authmiddleware,async(req,res)=>{
     //reports fetch krniyaan
-    const email=req.userEmail;
+    const id=parseInt(req.id);
     await prisma.$connect();
     try{
-        const userId=await prisma.user.findUnique({
-            where:{email:email}
-        })
+
         const reports=await prisma.bloodReport.findMany({
             where:{
-                userId:userId.id
+                userId:id
             }
         })
         console.log(reports)
@@ -199,12 +199,12 @@ router.get('/fetchbloodreports',authmiddleware,async(req,res)=>{
         await prisma.$disconnect();
     }
 })
-async function bloodopenaiapi(vitalsArray,age,gender){
-    if (!vitalsArray || vitalsArray.length === 0) {
-        return { status: 400, message: "No vitals data provided" };
-    }
+async function bloodopenaiapi(vitals,age,gender){
+    // if (!vitalsArray || vitalsArray.length === 0) {
+    //     return { status: 400, message: "No vitals data provided" };
+    // }
 
-    const vitals = vitalsArray[0]
+    // const vitals = vitalsArray[0]
     try {
         console.log("Vitals:", vitals);
         console.log("Age:", age);
@@ -228,24 +228,21 @@ async function bloodopenaiapi(vitalsArray,age,gender){
         console.log(content)
         return { status: 200, message: content };
     } catch (error) {
+        console.log(error)
         return {status:500,message:error}
-    }
+        }
 }
-async function putliver(email,vital,summary,date) {
+async function putliver(id,vital,summary,date) {
     await prisma.$connect();
     try{
-        const user=await prisma.user.findUnique({
-            where:{
-                email:email
-            }
-        })
-        if (!user) {
+
+        if (!id) {
             return { status: 404, message: "User not found" };
         }
         const new_liver=await prisma.liverReport.create({
             data:{
                 user:{
-                    connect: { id: user.id }, // Correct way to connect the user relation
+                    connect: { id: id }, 
                 },
                 SGPT:vital.SGPT,
                 SGOT:vital.SGOT,
@@ -258,6 +255,7 @@ async function putliver(email,vital,summary,date) {
             }
 
         })
+        console.log(new_liver)
         return {status:200,message:"Summary and data added"}
     }catch(err){
         return {status:500,message:err}
@@ -265,21 +263,13 @@ async function putliver(email,vital,summary,date) {
         await prisma.$disconnect();
     }
 }
-async function putblood(email,vital,summary,date) {
+async function putblood(id,vital,summary,date) {
     await prisma.$connect();
     try{
-        const user=await prisma.user.findUnique({
-            where:{
-                email:email
-            }
-        })
-        if (!user) {
-            return { status: 404, message: "User not found" };
-        }
         const new_blood=await prisma.bloodReport.create({
             data:{
                 user:{
-                    connect: { id: user.id }, // Correct way to connect the user relation
+                    connect: { id: id }, 
                 },
                 hemoglobin :vital.hemoglobin,
                 packedCellVolume :vital.hemoglobin,
@@ -292,6 +282,7 @@ async function putblood(email,vital,summary,date) {
                 summary:summary
             }
         })
+        console.log(new_blood)
         return {status:200,message:"Summary and data added"}
     }catch(err){
         return {status:500,message:err}
@@ -300,12 +291,12 @@ async function putblood(email,vital,summary,date) {
     }
 }
 
-async function liveropenaiapi(vitalsArray,age,gender){
-    if (!vitalsArray || vitalsArray.length === 0) {
-        return { status: 400, message: "No vitals data provided" };
-    }
+async function liveropenaiapi(vitals,age,gender){
+    // if (!vitalsArray || vitalsArray.length === 0) {
+    //     return { status: 400, message: "No vitals data provided" };
+    // }
 
-    const vitals = vitalsArray[0]
+    // const vitals = vitalsArray[0]
     try {
         console.log("Vitals:", vitals);
         console.log("Age:", age);
@@ -327,6 +318,7 @@ async function liveropenaiapi(vitalsArray,age,gender){
                 },
             ],
         });
+        console.log(completion)
         const content = completion.choices[0].message.content;
         console.log(content)
         return { status: 200, message: content };
@@ -334,47 +326,51 @@ async function liveropenaiapi(vitalsArray,age,gender){
         return {status:500,message:error}
     }
 }
-async function findusergenderage(email) {
+async function findusergenderage(id) {
     await prisma.$connect();
     try{
         const finduser=await prisma.user.findFirst({
             where:{
-                email:email
+                id:id
             }
         })
         
         return {status:200,age:finduser.age,gender:finduser.gender}
     }catch(err){
-        return {status:404,message:"user not found"}
+        console.log(err)
+        return {status:404,message:err}
+        
     }finally{
         await prisma.$disconnect();
     }
 }
 router.post('/liversummarize',authmiddleware,async(req,res)=>{
     const vitals=req.body;
-    const email=req.userEmail;
-    const vital=vitals[0]
-    const date=vital.date
-    const response = await findusergenderage(email);
+    const id=parseInt(req.id);
+    // const vital=vitals[0]
+    console.log(vitals)
+    const date=vitals.date;
+    const response = await findusergenderage(id);
+    console.log(response)
     if (response.status === 200) {
         const airesponse = await liveropenaiapi(vitals, response.age, response.gender);
-        const finalresponse=await putliver(email,vital,airesponse.message,date)
+        const finalresponse=await putliver(id,vitals,airesponse.message,date)
         console.log(finalresponse)
         res.json(airesponse.message);
         
     } else {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: "user not found" });
     }
 })
 router.post('/bloodsummarize',authmiddleware,async(req,res)=>{
     const vitals=req.body;
-    const email=req.userEmail;
-    const response = await findusergenderage(email);
-    const vital=vitals[0]
-    const date=vital.date
+    const id=parseInt(req.id);
+    const response = await findusergenderage(id);
+    // const vital=vitals[0]
+    const date=vitals.date
     if (response.status === 200) {
         const airesponse = await bloodopenaiapi(vitals, response.age, response.gender);
-        const finalresponse=await putblood(email,vital,airesponse.message,date)
+        const finalresponse=await putblood(id,vitals,airesponse.message,date)
         console.log(finalresponse)
         res.json(airesponse.message);
     } else {
@@ -383,8 +379,21 @@ router.post('/bloodsummarize',authmiddleware,async(req,res)=>{
 })
 router.post('/mentaltext',authmiddleware,async(req,res)=>{
     const text=req.body;
-    const email=req.userEmail
-    const response = await newmentaltext(text,email)
-    res.status(response.status).json(response.message)
+    const id=parseInt(req.id);
+    try{
+        await prisma.$connect();
+        const user=await prisma.user.findFirst({
+            where:{id:id}
+        })
+        console.log(user)
+        
+        const email=user.email;
+        const response = await newmentaltext(text,email)
+        res.status(response.status).json(response.message)
+    }catch(err){
+        console.log(text)
+        console.log(id)
+        res.status(500).json({text:"problem at line 380"})
+    }
 })
 module.exports = router;

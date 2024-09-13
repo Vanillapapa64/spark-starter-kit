@@ -2,21 +2,18 @@ const jwt= require('jsonwebtoken')
 const secret=require('./secret')
 
 const authmiddleware=(req,res,next)=>{
-
     const authorization=req.headers.authorization;
-    
     if (!authorization || !authorization.startsWith('Bearer')){
         return res.status(403).json({msg:'no auth'})
     }
     const token=authorization.split(' ')[1];
     try {
         const decoded=jwt.verify(token,secret);
-
-
         if (typeof decoded === 'string') {
-            req.userEmail = decoded; 
+            req.id = decoded; 
         } else if (typeof decoded === 'object' && 'email' in decoded) {
-            req.userEmail = decoded.email;
+            console.log(decoded)
+            req.id = decoded.id;
         } else {
             throw new Error('Invalid token');
         }
