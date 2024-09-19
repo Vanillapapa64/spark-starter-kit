@@ -347,7 +347,6 @@ async function findusergenderage(id) {
 router.post('/liversummarize',authmiddleware,async(req,res)=>{
     const vitals=req.body;
     const id=parseInt(req.id);
-    // const vital=vitals[0]
     console.log(vitals)
     const date=vitals.date;
     const response = await findusergenderage(id);

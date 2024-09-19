@@ -18,12 +18,18 @@ export function Landingpage() {
                 <div className="text-center -translate-y-44">
                     Revolusionising the personal healthcare system
                 </div>
-                <div className="flex justify-center pt-8 -translate-y-44">
+                <div className="flex justify-center pt-8 gap-16 -translate-y-44">
                     <button className="w-48 h-16  border-2 border-green-700 text-green-700 place-self-center rounded-3xl hover:bg-green-700 hover:text-white"
                     onClick={()=>{
                         navigate('/signup')
                     }}>
                         Get Started
+                    </button>
+                    <button className="w-48 h-16  border-2 border-green-700 text-green-700 place-self-center rounded-3xl hover:bg-green-700 hover:text-white"
+                    onClick={()=>{
+                        navigate('/signin')
+                    }}>
+                        Sign in
                     </button>
                 </div>
             </div>
