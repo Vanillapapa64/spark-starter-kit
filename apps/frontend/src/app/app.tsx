@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 import styles from './app.module.scss';
 
 import NxWelcome from './nx-welcome';
@@ -23,7 +23,7 @@ export function App() {
   return (
     <div className=' w-screen h-max flex'>
       <RecoilRoot>
-      <BrowserRouter>
+      <BrowserRouter basename="/app">
       <Routes>
       <Route path='/signup' element={<Signup/>} />
       <Route path='/signin' element={<Signin/>}/>
